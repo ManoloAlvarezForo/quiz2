@@ -1,70 +1,89 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import Post from "@/components/Post";
+import React, { useEffect, useState } from "react";
+import { FlatList, StyleSheet, View, ActivityIndicator } from 'react-native';
+import { Text, useTheme } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+// "createdAt": "2024-04-17T14:06:19.118Z",
+// "name": "Iris Quitzon",
+// "avatar": "https://cloudflare-ipfs.com/ipfs/Qmd3W5DuhgHirLHGVixi6V76LhCkZUz6pnFt5AJBiyvHye/avatar/388.jpg",
+// "description": "asymmetric",
+// "likes": 71953,
+// "image": "https://loremflickr.com/640/480",
+// "comments": 21092,
+// "liked": true,
+// "saved": true,
+// "location": "Salinas",
+// "id": "1"
 
-export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+export type PostType = {
+  id: number
+  name: string;
+  description: string;
+  image: string;
+  liked: boolean;
+  saved: boolean;
+  location: string;
 }
 
+const FeedScreen: React.FC = () => {
+  const [data, setData] = useState<PostType[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const theme = useTheme();
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch("https://662029f13bf790e070af2cd8.mockapi.io/api/v1/posts");
+        const json: any= await response.json();
+        console.log('JSON: ', json)
+        //TODO: Pagination should be implemented
+        setData(json);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+  const renderItem = ({ item }: { item: PostType }) => <Post item={item} />;
+
+  return (
+    <SafeAreaView style={[styles.container, {backgroundColor: theme.colors.background}]}>
+      <Text style={styles.title} variant="titleLarge">Instagram Feed</Text>
+      <FlatList
+        data={data}
+        renderItem={renderItem}
+        keyExtractor={(item) => item.id.toString()}
+      />
+    </SafeAreaView>
+  );
+};
+
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: "#f2f2f2",
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  loader: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+  title: {
+    padding: 5
+  }
 });
+
+export default FeedScreen;
